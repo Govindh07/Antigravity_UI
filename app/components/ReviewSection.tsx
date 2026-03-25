@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 import { Star } from "lucide-react";
 
@@ -17,57 +17,88 @@ function StackedCard({
   total, 
   progress 
 }: { 
-  review: any; 
+  review: { id: number; name: string; role: string; rating: number; date: string; text: string }; 
   index: number; 
   total: number;
   progress: MotionValue<number>;
 }) {
-  // Hardcoded highly-tuned animation curves for 4 cards over a 400vh scroll
-  // The scroll timeline is 0.0 to 1.0
-  const enterStart = [0, 0.15, 0.45, 0.75][index] || 0;
-  const enterEnd = [0, 0.35, 0.65, 0.90][index] || 0;
+  const usableProgress = 0.85; 
 
-  // The cards slide up from offscreen bottom to their staggered final Y
-  const finalY = index * 45; 
-  const y = index === 0 ? 0 : useTransform(progress, [enterStart, enterEnd], [800, finalY]);
+  // Math-based distance tracking perfectly replaces hardcoded arrays.
+  const calcDistance = (v: number) => {
+    const rawProgress = Math.min(v / usableProgress, 1.0); 
+    const activeScrollIndex = rawProgress * (total - 1);
+    let distance = activeScrollIndex - index;
+    
+    // Add a generous pause (deadzone) where the card stays completely centered and 100% visible
+    const PAUSE_ZONE = 0.2; 
+    if (Math.abs(distance) < PAUSE_ZONE) {
+      distance = 0;
+    } else if (distance > 0) {
+      distance -= PAUSE_ZONE;
+    } else {
+      distance += PAUSE_ZONE;
+    }
+    return distance; // Negative = future, 0 = active, Positive = past
+  };
 
-  // A card shrinks and dims when the NEXT card completes its entry
-  const shrinkStart = [0.15, 0.45, 0.75, 1.0][index] || 0;
-  const shrinkEnd = [0.35, 0.65, 0.90, 1.0][index] || 0;
-  
-  const targetScale = 1 - ((total - index) * 0.04);
-  const scale = index === total - 1 ? 1 : useTransform(progress, [shrinkStart, shrinkEnd], [1, targetScale]);
-  
-  const targetBrightness = index === total - 1 ? "brightness(100%)" : "brightness(35%)";
-  const filter = index === total - 1 ? "brightness(100%)" : useTransform(progress, [shrinkStart, shrinkEnd], ["brightness(100%)", targetBrightness]);
+  const y = useTransform(progress, (v) => {
+    const d = calcDistance(v);
+    if (d === 0) return 0; // Perfectly centered
+    if (d > 0) return -40 * d; // Moves up smoothly to look stacked behind
+    return 150 * -d; // Enters gracefully from below
+  });
+
+  const scale = useTransform(progress, (v) => {
+    const d = calcDistance(v);
+    if (d === 0) return 1;
+    if (d > 0) return Math.max(0.85, 1 - (0.05 * d)); // Shrinks in the background
+    return Math.max(0.9, 1 - (0.1 * -d)); // Enters slightly scaled down
+  });
+
+  const opacity = useTransform(progress, (v) => {
+    const d = calcDistance(v);
+    if (d === 0) return 1;
+    if (d > 0) return Math.max(0, 1 - (d * 0.8)); // Fades as it moves back
+    return Math.max(0, 1 + (d * 1.5)); // Fades in quickly as it comes up
+  });
+
+  const filter = useTransform(progress, (v) => {
+    const d = calcDistance(v);
+    if (d === 0) return "brightness(100%)";
+    if (d > 0) return `brightness(${Math.max(30, 100 - (d * 50))}%)`; // Dims natively
+    return "brightness(100%)";
+  });
 
   return (
     <motion.div 
-      style={{ y, scale, filter, transformOrigin: "top center", zIndex: index }}
-      className="absolute top-0 left-0 w-full h-[450px] glass-panel-heavy bg-[#030305]/80 backdrop-blur-3xl rounded-[2.5rem] p-10 md:p-16 border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.8)] flex flex-col justify-between group"
+      style={{ y, scale, filter, opacity, transformOrigin: "top center", zIndex: index }}
+      // Highly adaptive styling guaranteeing it will not clip past the screen boundaries
+      className="absolute top-0 w-full h-auto glass-panel-heavy bg-[#030305]/95 backdrop-blur-3xl rounded-[2rem] p-6 md:p-10 border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.8)] flex flex-col justify-between group"
     >
-      <div className="flex justify-between items-start mb-8 md:mb-12">
+      <div className="flex justify-between items-start mb-6 md:mb-10">
         <div className="flex items-center bg-dash-accent/10 px-4 py-2 rounded-full border border-dash-accent/20">
           <div className="flex gap-1">
-            {[...Array(review.rating)].map((_, i) => (
+            {[...Array(review.rating || 5)].map((_, i) => (
               <Star key={i} className="w-3.5 h-3.5 md:w-4 md:h-4 text-dash-accent fill-dash-accent" />
             ))}
           </div>
           <span className="text-dash-accent text-[10px] md:text-xs font-bold tracking-widest ml-3 mt-0.5">VERIFIED</span>
         </div>
-        <span className="text-xs md:text-sm font-medium text-dash-muted uppercase tracking-widest">{review.date}</span>
+        <span className="text-[10px] md:text-sm font-medium text-dash-muted uppercase tracking-widest">{review.date}</span>
       </div>
       
-      <p className="text-xl md:text-3xl lg:text-4xl text-white font-light leading-relaxed tracking-tight mb-8 md:mb-12 line-clamp-4">
-        "{review.text}"
+      {/* Dynamic font sizing ensures massive text easily fits standard visibilities */}
+      <p className="text-lg md:text-2xl lg:text-3xl text-white/90 font-light leading-relaxed tracking-tight mb-8 md:mb-10">
+        &quot;{review.text}&quot;
       </p>
       
       <div className="flex items-center gap-4 mt-auto">
-          <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50 font-bold tracking-widest text-lg md:text-xl shrink-0 group-hover:bg-dash-accent/10 group-hover:text-dash-accent transition-colors duration-500">
+          <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50 font-bold tracking-widest text-base md:text-xl shrink-0 group-hover:bg-dash-accent/10 group-hover:text-dash-accent transition-colors duration-500">
             {review.name.charAt(0)}
           </div>
           <div>
-            <div className="text-base md:text-lg font-medium text-white group-hover:text-dash-accent transition-colors duration-500">
+            <div className="text-sm md:text-lg font-medium text-white group-hover:text-dash-accent transition-colors duration-500">
               {review.name}
             </div>
             <div className="text-[10px] md:text-xs text-dash-muted uppercase tracking-widest mt-1 font-semibold">
@@ -79,35 +110,38 @@ function StackedCard({
   );
 }
 
-export default function ReviewSection() {
+function ReviewSectionInner({ scrollContainer }: { scrollContainer: HTMLElement }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef(scrollContainer);
   
   const { scrollYProgress } = useScroll({
     target: containerRef,
+    container: scrollRef,
     offset: ["start start", "end end"]
   });
 
   return (
-    // The entire section is 400vh tall to create the scroll duration
-    <section ref={containerRef} className="relative w-full h-[350vh] mt-32 md:mt-48 bg-black/40 rounded-[3.5rem] border border-white/5 mx-auto max-w-[1600px]">
-      
-      {/* The sticky viewport frame that stays locked while you scroll the 350vh */}
-      <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden px-4 md:px-8">
+    <section 
+      ref={containerRef} 
+      style={{ height: `${reviews.length * 150 + 50}vh` }}
+      className="relative w-full mt-24 md:mt-32 bg-black/40 rounded-[3.5rem] border border-white/5 mx-auto max-w-[1600px]"
+    >
+      <div className="sticky top-0 h-[70vh] w-full flex flex-col items-center justify-center px-4 md:px-8">
         
-        <div className="w-full max-w-6xl text-center mb-16 relative z-0">
+        <div className="w-full max-w-5xl text-center mb-10 md:mb-16 relative z-0">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-            <h4 className="text-dash-accent font-semibold tracking-widest text-xs md:text-sm uppercase mb-4 md:mb-6">Client Experience</h4>
-            <h2 className="text-5xl lg:text-7xl font-medium tracking-tight">Immersive Feedback.</h2>
+            <h4 className="text-dash-accent font-semibold tracking-widest text-xs md:text-sm uppercase mb-3 md:mb-5">Client Experience</h4>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight">Immersive Feedback.</h2>
           </motion.div>
         </div>
 
-        {/* The absolute positioned card container */}
-        <div className="relative w-full max-w-5xl h-[450px] mx-auto z-10 perspective-[1000px]">
+        {/* Center alignment logic ensures bounding stays perfect regardless of screen size */}
+        <div className="relative w-full max-w-4xl min-h-[350px] md:min-h-[400px] h-auto flex justify-center z-10 perspective-[1000px]">
           {reviews.map((review, i) => (
             <StackedCard 
               key={review.id} 
@@ -120,7 +154,25 @@ export default function ReviewSection() {
         </div>
 
       </div>
-      
     </section>
   );
+}
+
+export default function ReviewSection() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return <section style={{ height: `${reviews.length * 150 + 50}vh` }} className="relative w-full mt-24 md:mt-32" />;
+  }
+
+  const scrollContainer = document.getElementById("main-scroll-container");
+  if (!scrollContainer) {
+    return <section style={{ height: `${reviews.length * 150 + 50}vh` }} className="relative w-full mt-24 md:mt-32" />;
+  }
+
+  return <ReviewSectionInner scrollContainer={scrollContainer} />;
 }

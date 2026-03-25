@@ -17,7 +17,7 @@ export default function Home() {
   return (
     <DashboardLayout>
       <Sidebar />
-      <div className="flex-1 p-8 md:p-12 lg:p-16 overflow-y-auto overflow-x-hidden relative scroll-smooth">
+      <div id="main-scroll-container" className="flex-1 p-8 md:p-12 lg:p-16 overflow-y-auto overflow-x-hidden relative scroll-smooth">
         
         {/* Main Dashboard Hero Grid Container */}
         <div className="flex flex-col gap-24 w-full max-w-[1400px] mx-auto pb-10">
