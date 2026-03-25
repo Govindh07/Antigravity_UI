@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6c58062 (docs: update README with custom project details)
 # 🚀 Antigravity Furniture UI
 
 A premium **futuristic furniture e-commerce homepage** built using **Next.js, Tailwind CSS, and Framer Motion**, inspired by antigravity UI principles and cinematic design aesthetics.
@@ -150,5 +153,9 @@ This project is open for learning and inspiration purposes.
 
 ## 💡 Note
 
+<<<<<<< HEAD
 This project focuses on **visual experience and interaction design**, not a fully functional e-commerce backend.
 
+=======
+This project focuses on **visual experience and interaction design**, not a fully functional e-commerce backend.
+>>>>>>> 6c58062 (docs: update README with custom project details)
