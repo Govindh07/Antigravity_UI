@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, Info } from "lucide-react";
+import { motion } from "framer-motion";
+import { ChevronRight, Sliders } from "lucide-react";
 
 const categories = [
   { id: "sofas", name: "Sofas", count: "12 items" },
@@ -16,19 +16,21 @@ export default function CategoryPanel() {
 
   return (
     <motion.div 
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.6, delay: 0.4 }}
-      className="glass-panel rounded-[2rem] p-6 h-full flex flex-col relative overflow-hidden"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.2 }}
+      className="w-full flex flex-col xl:flex-row items-center gap-4 relative z-20"
     >
-      <div className="flex justify-between items-center mb-5">
-        <h2 className="text-xl font-medium tracking-wide">Categories</h2>
-        <button className="text-dash-muted hover:text-white transition-colors">
-          <Info size={18} />
-        </button>
+      {/* Title / Filter Trigger */}
+      <div className="glass-panel flex items-center justify-between xl:justify-center px-6 py-4 rounded-2xl shrink-0 w-full xl:w-auto h-16">
+        <div className="flex items-center gap-3">
+          <Sliders size={18} className="text-dash-accent" />
+          <span className="font-semibold tracking-wide uppercase text-sm">Categories</span>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-2 flex-1 relative z-10">
+      {/* Horizontal List */}
+      <div className="glass-panel rounded-2xl p-2 flex-1 w-full overflow-x-auto no-scrollbar flex items-center gap-2 h-16">
         {categories.map((cat) => {
           const isActive = activeId === cat.id;
 
@@ -36,46 +38,41 @@ export default function CategoryPanel() {
             <button
               key={cat.id}
               onClick={() => setActiveId(cat.id)}
-              className={`relative flex items-center justify-between py-3 px-4 rounded-2xl transition-all duration-300 ${
+              className={`relative flex items-center justify-between h-full px-5 py-2 rounded-xl transition-all duration-300 whitespace-nowrap group shrink-0 ${
                 isActive ? "text-black" : "text-white hover:bg-white/5"
               }`}
             >
               {isActive && (
                 <motion.div
-                  layoutId="activeCategoryBg"
-                  className="absolute inset-0 bg-white rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                  layoutId="activeCategoryBgH"
+                  className="absolute inset-0 bg-white rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.15)]"
                   initial={false}
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
               
-              <div className="relative z-10 flex flex-col items-start gap-1">
-                <span className="font-medium text-left">{cat.name}</span>
-                <span className={`text-xs ${isActive ? "text-black/60" : "text-dash-muted"}`}>
+              <div className="relative z-10 flex items-center gap-3">
+                <span className={`font-medium ${isActive ? "text-black" : "text-white/90 group-hover:text-white"}`}>
+                  {cat.name}
+                </span>
+                <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ${isActive ? "bg-black/10 text-black/80" : "bg-white/10 text-dash-muted"}`}>
                   {cat.count}
                 </span>
-              </div>
-              
-              <div className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                isActive ? "bg-black/10 text-black" : "bg-dash-panel text-white"
-              }`}>
-                <ChevronRight size={16} />
               </div>
             </button>
           );
         })}
       </div>
-
+      
+      {/* View All */}
       <motion.button 
-        whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.15)" }}
+        whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.1)" }}
         whileTap={{ scale: 0.98 }}
-        className="relative z-20 w-full mt-auto bg-white/5 border border-white/10 transition-colors py-[14px] rounded-2xl font-semibold text-sm text-white text-center tracking-widest uppercase shadow-lg backdrop-blur-md"
+        className="glass-panel rounded-2xl px-6 py-4 shrink-0 font-medium text-sm text-white tracking-widest uppercase flex items-center gap-2 w-full xl:w-auto justify-center h-16 transition-colors"
       >
-        View All Filters
+        View All
+        <ChevronRight size={16} className="text-dash-accent" />
       </motion.button>
-
-      {/* Ambient glow for the panel */}
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-dash-accent/10 rounded-full blur-[60px] pointer-events-none" />
     </motion.div>
   );
 }

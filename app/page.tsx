@@ -23,19 +23,19 @@ export default function Home() {
         <div className="flex flex-col gap-24 w-full max-w-[1400px] mx-auto pb-10">
           
           {/* Phase 1: Dashboard Top Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 w-full h-auto">
-            {/* Top Left: Hero */}
-            <div className="h-[460px] rounded-[2rem] overflow-hidden">
+          <div className="flex flex-col gap-6 w-full">
+            {/* Top: Full-Width Hero */}
+            <div className="w-full">
               <HeroSection />
             </div>
             
-            {/* Top Right: Categories (Rooms equivalent) */}
-            <div className="h-[460px] hidden lg:block">
+            {/* Category Panel Below Hero */}
+            <div className="w-full">
               <CategoryPanel />
             </div>
 
             {/* Bottom Strip: Interactive Accordion (Spans full width) */}
-            <div className="col-span-1 lg:col-span-2">
+            <div className="w-full mt-4">
               <InteractiveProductStrip />
             </div>
           </div>
